@@ -2,15 +2,15 @@ const CACHE = 'kutuphane-v1';
 const ASSETS = [
   '/school-library/',
   '/school-library/index.html',
-  '/school-library/css/style.css',
-  '/school-library/js/config.js',
-  '/school-library/js/storage.js',
-  '/school-library/js/auth.js',
-  '/school-library/js/books.js',
-  '/school-library/js/loans.js',
-  '/school-library/js/students.js',
-  '/school-library/js/reports.js',
-  '/school-library/js/app.js',
+  '/school-library/style.css',
+  '/school-library/config.js',
+  '/school-library/storage.js',
+  '/school-library/auth.js',
+  '/school-library/books.js',
+  '/school-library/loans.js',
+  '/school-library/students.js',
+  '/school-library/reports.js',
+  '/school-library/app.js',
 ];
 
 self.addEventListener('install', e => {
