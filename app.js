@@ -616,6 +616,17 @@ function renderSettings() {
   document.getElementById('settings-github-repo').value = CONFIG.GITHUB_REPO || '';
 }
 
+function saveGitHubSettings() {
+  const token = document.getElementById('settings-github-token').value.trim();
+  if (token) {
+    localStorage.setItem('gh_token', token);
+    document.getElementById('settings-github-token').value = '';
+    UI.alert('Token kaydedildi. Artık veriler GitHub\'a senkronize edilecek.');
+  } else {
+    UI.alert('Lütfen token giriniz.', 'danger');
+  }
+}
+
 function saveSettings() {
   const data = Storage.get();
   data.meta.school = document.getElementById('settings-school').value;
