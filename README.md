@@ -1,5 +1,3 @@
-# school-library
-A free, mobile-friendly school library management system built with vanilla JS and GitHub Pages. Features ISBN lookup via Google Books API, barcode scanner support, and annual JSON archiving.
 # 📚 School Library Management System
 
 A free, mobile-friendly web application for managing a school library — built with vanilla HTML/CSS/JavaScript, hosted on GitHub Pages, and powered by the Google Books API.
