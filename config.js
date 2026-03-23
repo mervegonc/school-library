@@ -1,26 +1,23 @@
 // ============================================================
-// CONFIGURATION — Fill in your keys before deploying
+// CONFIGURATION
+// ⚠️  GITHUB_TOKEN buraya YAZMAYIN — sistem ilk kurulumda sorar
 // ============================================================
 const CONFIG = {
-  // Google Books API Key
-  // Get it from: https://console.cloud.google.com
-  // Enable "Books API" then create an API key
-  GOOGLE_BOOKS_API_KEY: 'YOUR_GOOGLE_BOOKS_API_KEY',
+  // Google Books API Key — bu public olabilir, sadece kitap arama için
+  GOOGLE_BOOKS_API_KEY: 'AIzaSyCFiNfS-QxgPAMplDiXe2Zi-o_U-p4JLrk',
 
-  // GitHub Personal Access Token
-  // Get it from: GitHub → Settings → Developer settings → Fine-grained tokens
-  // Permission needed: Contents → Read and Write (for this repo only)
-  GITHUB_TOKEN: 'YOUR_GITHUB_TOKEN',
+  // GitHub bilgileri — token YOK, LocalStorage'dan okunur
+  GITHUB_OWNER: 'mervegonc',
+  GITHUB_REPO:  'school-library',
+  DATA_FILE:    'data/2025-2026.json',
 
-  // Your GitHub username and repo name
-  GITHUB_OWNER: 'YOUR_GITHUB_USERNAME',
-  GITHUB_REPO: 'school-library',
+  // Token LocalStorage'dan okunur (kullanıcı ilk girişte ayarlardan girer)
+  get GITHUB_TOKEN() {
+    return localStorage.getItem('gh_token') || '';
+  },
 
-  // Active data file (changes each school year)
-  DATA_FILE: 'data/2025-2026.json',
-
-  // App settings
+  // Uygulama ayarları
   MAX_LOANS_PER_STUDENT: 3,
-  DEFAULT_LOAN_DAYS: 14,
-  SCHOOL_NAME: 'Okul Kütüphanesi',
+  DEFAULT_LOAN_DAYS:     14,
+  SCHOOL_NAME:           'Okul Kütüphanesi',
 };
