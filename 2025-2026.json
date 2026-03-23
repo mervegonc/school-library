@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "year": "2025-2026",
+    "created": "2025-09-01",
+    "school": "Okul Kütüphanesi"
+  },
+  "books": [],
+  "students": [],
+  "loans": [],
+  "users": [
+    { "id": 1, "username": "kutuphane", "password": "kutuphane123", "role": "librarian", "name": "Kütüphaneci" },
+    { "id": 2, "username": "ogretmen", "password": "ogretmen123", "role": "teacher", "name": "Öğretmen" },
+    { "id": 3, "username": "yonetim", "password": "yonetim123", "role": "management", "name": "Yönetim" }
+  ]
+}

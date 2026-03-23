@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#2E5B3C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Okul Kütüphanesi</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon">📚</div>
+      <h1>Okul Kütüphanesi</h1>
+      <p>Lütfen rolünüzü seçip giriş yapın</p>
+    </div>
+    <div class="role-grid">
+      <div class="role-card selected" id="role-librarian" onclick="selectRole('librarian')">
+        <div class="ri">🔑</div><div class="rn">Kütüphaneci</div><div class="rd">Tam yönetim</div>
+      </div>
+      <div class="role-card" id="role-teacher" onclick="selectRole('teacher')">
+        <div class="ri">👨‍🏫</div><div class="rn">Öğretmen</div><div class="rd">Görüntüleme</div>
+      </div>
+      <div class="role-card" id="role-student" onclick="selectRole('student')">
+        <div class="ri">🎒</div><div class="rn">Öğrenci</div><div class="rd">Kitap arama</div>
+      </div>
+      <div class="role-card" id="role-management" onclick="selectRole('management')">
+        <div class="ri">📊</div><div class="rn">Yönetim</div><div class="rd">Raporlar</div>
+      </div>
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-field">
+      <label>Kullanıcı adı</label>
+      <input type="text" id="login-user" placeholder="kullanici.adi" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>Şifre</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-login" onclick="doLogin()">Giriş Yap</button>
+    <div class="login-hint" id="login-hint">Kütüphaneci: kutuphane / kutuphane123</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     APP SHELL
+════════════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- TOP NAV -->
+  <nav class="topnav">
+    <div class="topnav-brand">📚 Kütüphane<span id="nav-school-name"></span></div>
+    <div class="nav-tabs" id="nav-tabs"></div>
+    <div class="topnav-right">
+      <span class="sync-indicator" id="sync-status"></span>
+      <div class="user-pill">
+        <div class="user-avatar" id="nav-avatar">K</div>
+        <span id="nav-username">Kütüphaneci</span>
+      </div>
+      <button class="btn-logout" onclick="logout()">Çıkış</button>
+    </div>
+  </nav>
+
+  <!-- GLOBAL ALERT -->
+  <div style="max-width:1100px;margin:0 auto;padding:0 20px">
+    <div id="global-alert" class="alert" style="display:none;margin-top:14px"></div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────
+       PAGE: DASHBOARD
+  ────────────────────────────────────────────────────── -->
+  <div class="page" id="page-dashboard">
+    <div class="page-header">
+      <div class="page-header-text"><h2>Genel Bakış</h2><p id="dash-date"></p></div>
+    </div>
+    <div class="metrics" id="dash-metrics"></div>
+    <div class="grid2" style="margin-bottom:20px">
+      <div class="card"><div class="card-body">
+        <div class="card-title">En Çok Okunanlar</div>
+        <div id="dash-top-books"></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <div class="card-title">Son İşlemler</div>
+        <div id="dash-recent"></div>
+      </div></div>
+    </div>
+    <div id="dash-overdue"></div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────
+       PAGE: BOOKS
+  ────────────────────────────────────────────────────── -->
+  <div class="page" id="page-books">
+    <div class="page-header">
+      <div class="page-header-text"><h2>Kitap Kataloğu</h2></div>
+      <div class="page-actions" id="book-page-actions">
+        <button class="btn" onclick="_bookView=_bookView==='grid'?'table':'grid';renderBooks()" id="view-toggle-btn">🔲 Kapak Görünümü</button>
+        <button class="btn btn-primary" id="btn-add-book" onclick="openEditBook(null)" style="display:none">+ Kitap Ekle</button>
+      </div>
+    </div>
+    <div class="search-row">
+      <div class="search-box">
+        <span class="si">🔍</span>
+        <input type="text" id="book-search-input" placeholder="Kitap adı, yazar veya ISBN…">
+      </div>
+      <select class="search-select" id="book-cat-filter">
+        <option value="">Tüm Kategoriler</option>
+        <option>Roman</option><option>Hikaye</option><option>Şiir</option>
+        <option>Tarih</option><option>Fen &amp; Doğa</option><option>Biyografi</option>
+        <option>Felsefe</option><option>Çocuk</option><option>Diğer</option>
+      </select>
+    </div>
+    <div id="books-content"></div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────
+       PAGE: ISBN
+  ────────────────────────────────────────────────────── -->
+  <div class="page" id="page-isbn">
+    <div class="page-header">
+      <div class="page-header-text"><h2>ISBN ile Kitap Ekle</h2><p>Barkod okuyucu veya manuel giriş</p></div>
+    </div>
+    <div class="card" style="max-width:580px"><div class="card-body">
+      <div class="alert alert-info" style="margin-bottom:16px">
+        📱 Barkod okuyucuyu bağlayıp aşağıdaki alana odaklanarak okutun — ya da kitap adını yazın.
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:16px">
+        <div class="field" style="flex:1">
+          <label>ISBN numarası veya kitap adı</label>
+          <input type="text" id="isbn-input" placeholder="9789750719387 veya Kürk Mantolu Madonna">
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary" id="isbn-search-btn" onclick="doISBNSearch()">🔍 Ara</button>
+        </div>
+      </div>
+      <div id="isbn-results"></div>
+    </div></div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────
+       PAGE: LOANS
+  ────────────────────────────────────────────────────── -->
+  <div class="page" id="page-loans">
+    <div class="page-header">
+      <div class="page-header-text"><h2>Ödünç İşlemleri</h2></div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn loan-tab-btn active" data-tab="borrow" onclick="renderLoanTab('borrow')">📤 Ödünç Ver</button>
+      <button class="tab-btn loan-tab-btn" data-tab="active" onclick="renderLoanTab('active')">📋 Aktif Ödünçler</button>
+      <button class="tab-btn loan-tab-btn" data-tab="history" onclick="renderLoanTab('history')">🕐 Geçmiş</button>
+    </div>
+
+    <div id="loan-panel-borrow">
+      <div class="card" style="max-width:600px"><div class="card-body">
+        <div class="card-title">Yeni Ödünç Ver</div>
+        <div class="form-grid" style="margin-bottom:14px">
+          <div class="field"><label>Öğrenci</label><select id="borrow-student"></select></div>
+          <div class="field"><label>Kitap</label><select id="borrow-book"></select></div>
+          <div class="field"><label>Ödünç Tarihi</label><input type="date" id="borrow-date"></div>
+          <div class="field"><label>İade Tarihi</label><input type="date" id="borrow-due"></div>
+        </div>
+        <button class="btn btn-primary" onclick="doBorrow()">✓ Ödünç Ver</button>
+      </div></div>
+    </div>
+    <div id="loan-panel-active" style="display:none"></div>
+    <div id="loan-panel-history" style="display:none"></div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────
+       PAGE: STUDENTS
+  ────────────────────────────────────────────────────── -->
+  <div class="page" id="page-students">
+    <div class="page-header">
+      <div class="page-header-text"><h2>Öğrenci Kayıtları</h2></div>
+      <div class="page-actions">
+        <button class="btn btn-primary" id="btn-add-student" onclick="openEditStudent(null)" style="display:none">+ Öğrenci Ekle</button>
+      </div>
+    </div>
+    <div class="search-row">
+      <div class="search-box">
+        <span class="si">🔍</span>
+        <input type="text" id="student-search-input" placeholder="İsim, numara veya sınıf…">
+      </div>
+    </div>
+    <div id="students-content"></div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────
+       PAGE: REPORTS
+  ────────────────────────────────────────────────────── -->
+  <div class="page" id="page-reports">
+    <div class="page-header">
+      <div class="page-header-text"><h2>Raporlar &amp; İstatistikler</h2></div>
+      <button class="btn" onclick="window.print()">🖨️ Yazdır</button>
+    </div>
+    <div class="metrics" id="report-metrics"></div>
+    <div class="grid2" style="margin-bottom:18px">
+      <div class="card"><div class="card-body">
+        <div class="card-title">En Çok Okunan Kitaplar</div>
+        <div id="report-top-books"></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <div class="card-title">Sınıf Bazlı Okuma</div>
+        <div id="report-by-class"></div>
+      </div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="card-body">
+        <div class="card-title">En Aktif Okuyucular</div>
+        <div id="report-top-readers"></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <div class="card-title">Kategori Popülerliği</div>
+        <div id="report-by-cat"></div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────
+       PAGE: SETTINGS
+  ────────────────────────────────────────────────────── -->
+  <div class="page" id="page-settings">
+    <div class="page-header">
+      <div class="page-header-text"><h2>Ayarlar</h2></div>
+    </div>
+    <div class="grid2">
+      <div>
+        <div class="card" style="margin-bottom:16px"><div class="card-body">
+          <div class="card-title">Okul Bilgileri</div>
+          <div class="field" style="margin-bottom:12px">
+            <label>Okul / Kütüphane adı</label>
+            <input type="text" id="settings-school">
+          </div>
+          <div style="font-size:13px;color:var(--text3);margin-bottom:12px">Aktif yıl: <strong id="settings-year"></strong></div>
+          <button class="btn btn-primary" onclick="saveSettings()">Kaydet</button>
+        </div></div>
+
+        <div class="card"><div class="card-body">
+          <div class="card-title">Kullanıcı Şifreleri</div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Varsayılan şifreler data dosyasından yönetilir. Şifre değiştirmek için GitHub'daki JSON dosyasını düzenleyin.</p>
+          <div style="font-size:12px;color:var(--text3);line-height:1.8">
+            Kütüphaneci: <strong>kutuphane / kutuphane123</strong><br>
+            Öğretmen: <strong>ogretmen / ogretmen123</strong><br>
+            Yönetim: <strong>yonetim / yonetim123</strong><br>
+            Öğrenci: <strong>öğrenci no / öğrenci no</strong>
+          </div>
+        </div></div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:16px"><div class="card-body">
+          <div class="card-title">GitHub Ayarları</div>
+          <div class="field" style="margin-bottom:12px">
+            <label>GitHub Kullanıcı Adı</label>
+            <input type="text" id="settings-github-owner" placeholder="kullaniciadiniz">
+          </div>
+          <div class="field" style="margin-bottom:12px">
+            <label>Repo Adı</label>
+            <input type="text" id="settings-github-repo" placeholder="school-library">
+          </div>
+          <p style="font-size:12px;color:var(--text3)">Token ve API key için <code>js/config.js</code> dosyasını düzenleyin.</p>
+        </div></div>
+
+        <div class="card"><div class="card-body">
+          <div class="card-title">Yeni Dönem Başlat</div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Mevcut yılın verileri arşivlenir, kitap kataloğu korunur, ödünç kayıtları temizlenir.</p>
+          <button class="btn btn-danger" onclick="UI.modal('modal-archive',true)">📦 Yılı Arşivle &amp; Yeni Dönem</button>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /#app -->
+
+<!-- ═══════════════════════════════════════════════════════
+     MODALS
+════════════════════════════════════════════════════════ -->
+
+<!-- Book Detail -->
+<div class="modal-overlay" id="modal-book-detail">
+  <div class="modal">
+    <div id="book-detail-body"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="UI.modal('modal-book-detail',false)">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit / Add Book -->
+<div class="modal-overlay" id="modal-edit-book">
+  <div class="modal">
+    <h3 id="modal-book-title">Kitap Ekle</h3>
+    <input type="hidden" id="edit-book-id">
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field form-full"><label>Kitap Adı *</label><input type="text" id="eb-title" placeholder="Kitap adı"></div>
+      <div class="field"><label>Yazar *</label><input type="text" id="eb-author" placeholder="Yazar adı"></div>
+      <div class="field"><label>Yayınevi</label><input type="text" id="eb-publisher"></div>
+      <div class="field"><label>Yıl</label><input type="number" id="eb-year" placeholder="2023"></div>
+      <div class="field"><label>ISBN</label><input type="text" id="eb-isbn" placeholder="9789..."></div>
+      <div class="field"><label>Kategori</label>
+        <select id="eb-category">
+          <option>Roman</option><option>Hikaye</option><option>Şiir</option>
+          <option>Tarih</option><option>Fen &amp; Doğa</option><option>Biyografi</option>
+          <option>Felsefe</option><option>Çocuk</option><option>Diğer</option>
+        </select>
+      </div>
+      <div class="field"><label>Raf Konumu</label><input type="text" id="eb-shelf" placeholder="A-01"></div>
+      <div class="field"><label>Adet</label><input type="number" id="eb-qty" value="1" min="1"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="UI.modal('modal-edit-book',false)">İptal</button>
+      <button class="btn btn-primary" onclick="saveBook()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit / Add Student -->
+<div class="modal-overlay" id="modal-edit-student">
+  <div class="modal">
+    <h3 id="modal-student-title">Öğrenci Ekle</h3>
+    <input type="hidden" id="edit-student-id">
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>Ad *</label><input type="text" id="es-name"></div>
+      <div class="field"><label>Soyad *</label><input type="text" id="es-surname"></div>
+      <div class="field"><label>Öğrenci No *</label><input type="text" id="es-no" placeholder="2024001"></div>
+      <div class="field"><label>Sınıf</label><input type="text" id="es-class" placeholder="10-A"></div>
+      <div class="field"><label>E-posta</label><input type="email" id="es-email"></div>
+      <div class="field"><label>Veli Telefonu</label><input type="text" id="es-phone"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="UI.modal('modal-edit-student',false)">İptal</button>
+      <button class="btn btn-primary" onclick="saveStudent()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Archive Modal -->
+<div class="modal-overlay" id="modal-archive">
+  <div class="modal" style="max-width:400px">
+    <h3>Yeni Dönem Başlat</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Mevcut veriler arşivlenir. Kitap kataloğu ve kullanıcılar korunur.</p>
+    <div class="field" style="margin-bottom:16px">
+      <label>Yeni yıl kodu</label>
+      <input type="text" id="new-year-input" placeholder="2026-2027">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="UI.modal('modal-archive',false)">İptal</button>
+      <button class="btn btn-primary" onclick="doArchive()">Arşivle &amp; Başlat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════════════════════ -->
+<script src="js/config.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/books.js"></script>
+<script src="js/students.js"></script>
+<script src="js/loans.js"></script>
+<script src="js/reports.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+  // Set date on dashboard
+  document.addEventListener('DOMContentLoaded', () => {
+    const dd = document.getElementById('dash-date');
+    if (dd) dd.textContent = new Date().toLocaleDateString('tr-TR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    // Show add buttons for librarian
+    if (Auth.isLibrarian()) {
+      const ab = document.getElementById('btn-add-book');
+      const as = document.getElementById('btn-add-student');
+      if (ab) ab.style.display = '';
+      if (as) as.style.display = '';
+    }
+  });
+</script>
+
+</body>
+</html>
