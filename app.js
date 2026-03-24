@@ -152,6 +152,15 @@ function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   setupNav();
+
+  // Kütüphaneciye özel butonları her zaman göster
+  if (Auth.isLibrarian()) {
+    ['btn-add-book', 'btn-add-student'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.style.display = 'inline-flex'; el.style.visibility = 'visible'; }
+    });
+  }
+
   const role = Auth.role();
   const firstPages = { librarian: 'dashboard', teacher: 'dashboard', student: 'books', management: 'dashboard' };
   navigateTo(firstPages[role] || 'dashboard');
@@ -239,10 +248,12 @@ function renderBooks() {
       ? `<div class="book-grid">${books.map(b => {
           const avail = Books.getAvailable(b.id);
           return `<div class="book-card" onclick="openBookDetail(${b.id})">
-            ${b.cover
-              ? `<div class="book-card-cover"><img src="${b.cover}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\"no-cover\\">📖</div>'"></div>`
-              : '<div class="no-cover" style="aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;background:var(--surface2);font-size:36px">📖</div>'
-            }
+            <div class="book-card-cover">
+              ${b.cover
+                ? `<img src="${b.cover}" alt="${b.title}" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='📖'">`
+                : '📖'
+              }
+            </div>
             <div class="book-card-body">
               <div class="book-card-title">${b.title}</div>
               <div class="book-card-author">${b.author}</div>
@@ -271,7 +282,10 @@ function renderBooks() {
             <td style="font-size:12px;color:var(--text3)">${b.shelf || '—'}</td>
             <td>${avail}/${b.qty}</td>
             <td>${UI.availBadge(avail, b.qty)}</td>
-            ${isLib ? `<td><button class="btn btn-sm" onclick="openEditBook(${b.id})">Düzenle</button></td>` : ''}
+            ${isLib ? `<td style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px">
+              <button class="btn btn-sm" onclick="openEditBook(${b.id})">Düzenle</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteBook(${b.id})">Sil</button>
+            </td>` : ''}
           </tr>`;
         }).join('') : `<tr><td colspan="7"><div class="empty-state"><div class="ei">📭</div><p>Kitap bulunamadı</p></div></td></tr>`}
         </tbody></table>
@@ -338,6 +352,18 @@ function saveBook() {
   else { Books.add(data); UI.alert(`"${title}" eklendi.`); }
   UI.modal('modal-edit-book', false);
   renderBooks();
+}
+
+function deleteBook(bookId) {
+  const b = Books.getById(bookId);
+  if (!b) return;
+  const active = (Storage.get().loans || []).filter(l => l.bookId === bookId && l.status === 'active').length;
+  if (active > 0) { UI.alert(`"${b.title}" şu an ödünçte, silinemez.`, 'danger'); return; }
+  if (!confirm(`"${b.title}" kitabını silmek istediğinize emin misiniz?`)) return;
+  Books.remove(bookId);
+  UI.alert(`"${b.title}" silindi.`);
+  renderBooks();
+  renderDashboard();
 }
 
 // ── ISBN ──────────────────────────────────────────────────
@@ -532,10 +558,26 @@ function renderStudents() {
           <td><span class="chip">${s.class || '—'}</span></td>
           <td>${active > 0 ? `<span class="badge badge-blue">${active} kitap</span>` : '<span class="badge badge-gray">Yok</span>'}</td>
           <td>${total}</td>
-          ${isLib ? `<td><button class="btn btn-sm" onclick="openEditStudent(${s.id})">Düzenle</button></td>` : ''}
+          ${isLib ? `<td style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px">
+            <button class="btn btn-sm" onclick="openEditStudent(${s.id})">Düzenle</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.id})">Sil</button>
+          </td>` : ''}
         </tr>`;
       }).join('')}</tbody></table></div>`
     : '<div class="empty-state"><div class="ei">👤</div><p>Öğrenci bulunamadı</p></div>';
+}
+
+function deleteStudent(studentId) {
+  const s = Students.getById(studentId);
+  if (!s) return;
+  const active = Students.getActiveLoans(studentId).length;
+  if (active > 0) { UI.alert(`${s.name} ${s.surname} adlı öğrencinin aktif ödüncü var, silinemez.`, 'danger'); return; }
+  if (!confirm(`${s.name} ${s.surname} adlı öğrenciyi silmek istediğinize emin misiniz?`)) return;
+  try {
+    Students.remove(studentId);
+    UI.alert(`${s.name} ${s.surname} silindi.`);
+    renderStudents();
+  } catch(e) { UI.alert(e.message, 'danger'); }
 }
 
 function openEditStudent(studentId) {
