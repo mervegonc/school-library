@@ -104,8 +104,37 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--bg)}td strong{f
 .empty-state{text-align:center;padding:48px 20px;color:var(--text3)}.empty-state .ei{font-size:44px;margin-bottom:12px}.empty-state p{font-size:14px}.empty-state .btn{margin-top:16px}
 .overdue-banner{background:var(--red-light);border:1px solid #f0b0b0;border-radius:var(--radius);padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--red)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
-@media(max-width:640px){.topnav{padding:0 12px}.topnav-brand{font-size:14px;margin-right:12px}.nav-tab{padding:0 10px;font-size:12px}.nav-tab .tab-label{display:none}.page{padding:16px 14px}.form-grid{grid-template-columns:1fr}.grid2,.grid3{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.page-header{flex-direction:column}.modal{padding:20px}.page-actions{width:100%;justify-content:flex-start}.btn{white-space:nowrap}}
-@media(max-width:380px){.role-grid{grid-template-columns:1fr 1fr}.metrics{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){
+  .topnav{padding:0 10px}
+  .topnav-brand{font-size:13px;margin-right:8px}
+  .nav-tab{padding:0 8px;font-size:11px;height:52px}
+  .nav-tab .tab-label{display:none}
+  .page{padding:14px 12px}
+  .form-grid{grid-template-columns:1fr}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr;gap:8px}
+  .metric-card{padding:12px 14px}
+  .metric-value{font-size:22px}
+  .page-header{flex-direction:column;gap:10px}
+  .page-actions{width:100%}
+  .page-actions .btn{flex:1;justify-content:center;text-align:center}
+  .modal{padding:18px;margin:10px}
+  .modal-footer{flex-direction:column}
+  .modal-footer .btn{width:100%;justify-content:center}
+  table{font-size:12px}
+  th,td{padding:8px 10px}
+  .tabs{gap:1px;padding:2px}
+  .tab-btn{padding:6px 8px;font-size:12px}
+  .card-body{padding:14px 16px}
+  .search-box{padding:7px 10px}
+  .btn{padding:9px 14px;font-size:13px}
+  .btn-sm{padding:6px 10px;font-size:12px}
+}
+@media(max-width:380px){
+  .role-grid{grid-template-columns:1fr 1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .nav-tab{padding:0 6px;font-size:10px}
+}
 @media print{.topnav,.page-actions,.btn,.search-row,.tabs{display:none !important}.page{padding:0;max-width:100%}body{background:white}}
 </style>
 </head>
@@ -279,18 +308,36 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--bg)}td strong{f
   ────────────────────────────────────────────────────── -->
   <div class="page" id="page-students">
     <div class="page-header">
-      <div class="page-header-text"><h2>Öğrenci Kayıtları</h2></div>
-      <div class="page-actions">
+      <div class="page-header-text"><h2>Kullanıcı Yönetimi</h2></div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn user-tab-btn active" data-tab="students" onclick="userTab('students',this)">🎒 Öğrenciler</button>
+      <button class="tab-btn user-tab-btn" data-tab="teachers" onclick="userTab('teachers',this)">👨‍🏫 Öğretmenler</button>
+    </div>
+
+    <!-- Öğrenciler -->
+    <div id="user-panel-students">
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <div class="search-box" style="flex:1;min-width:200px">
+          <span class="si">🔍</span>
+          <input type="text" id="student-search-input" placeholder="İsim, numara veya sınıf…">
+        </div>
         <button class="btn btn-primary" id="btn-add-student" onclick="openEditStudent(null)" style="display:none">+ Öğrenci Ekle</button>
       </div>
+      <div id="students-content"></div>
     </div>
-    <div class="search-row">
-      <div class="search-box">
-        <span class="si">🔍</span>
-        <input type="text" id="student-search-input" placeholder="İsim, numara veya sınıf…">
+
+    <!-- Öğretmenler -->
+    <div id="user-panel-teachers" style="display:none">
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <div class="search-box" style="flex:1;min-width:200px">
+          <span class="si">🔍</span>
+          <input type="text" id="teacher-search-input" placeholder="İsim veya kullanıcı adı…" oninput="renderTeachers()">
+        </div>
+        <button class="btn btn-primary" id="btn-add-teacher" onclick="openEditTeacher(null)" style="display:none">+ Öğretmen Ekle</button>
       </div>
+      <div id="teachers-content"></div>
     </div>
-    <div id="students-content"></div>
   </div>
 
   <!-- ─────────────────────────────────────────────────────
@@ -443,6 +490,25 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--bg)}td strong{f
     <div class="modal-footer">
       <button class="btn" onclick="UI.modal('modal-edit-student',false)">İptal</button>
       <button class="btn btn-primary" onclick="saveStudent()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit / Add Teacher -->
+<div class="modal-overlay" id="modal-edit-teacher">
+  <div class="modal">
+    <h3 id="modal-teacher-title">Öğretmen Ekle</h3>
+    <input type="hidden" id="edit-teacher-id">
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>Ad *</label><input type="text" id="et-name"></div>
+      <div class="field"><label>Soyad *</label><input type="text" id="et-surname"></div>
+      <div class="field"><label>Kullanıcı Adı *</label><input type="text" id="et-username" placeholder="ogretmen2"></div>
+      <div class="field"><label>Şifre *</label><input type="text" id="et-password" placeholder="sifre123"></div>
+      <div class="field form-full"><label>Branş / Açıklama</label><input type="text" id="et-branch" placeholder="Matematik, Türkçe..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="UI.modal('modal-edit-teacher',false)">İptal</button>
+      <button class="btn btn-primary" onclick="saveTeacher()">Kaydet</button>
     </div>
   </div>
 </div>
