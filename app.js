@@ -155,7 +155,7 @@ function showApp() {
 
   // Kütüphaneciye özel butonları her zaman göster
   if (Auth.isLibrarian()) {
-    ['btn-add-book', 'btn-add-student'].forEach(id => {
+    ['btn-add-book', 'btn-add-student', 'btn-add-teacher'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.style.display = 'inline-flex'; el.style.visibility = 'visible'; }
     });
@@ -604,6 +604,89 @@ function saveStudent() {
     UI.modal('modal-edit-student', false);
     renderStudents();
   } catch(e) { UI.alert(e.message, 'danger'); }
+}
+
+// ── USER TABS ──────────────────────────────────────────────
+function userTab(tab, btn) {
+  document.getElementById('user-panel-students').style.display = tab === 'students' ? 'block' : 'none';
+  document.getElementById('user-panel-teachers').style.display = tab === 'teachers' ? 'block' : 'none';
+  document.querySelectorAll('.user-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  if (tab === 'teachers') renderTeachers();
+  if (tab === 'students') renderStudents();
+}
+
+// ── TEACHER MANAGEMENT ─────────────────────────────────────
+function renderTeachers() {
+  const q = (document.getElementById('teacher-search-input')?.value || '').toLowerCase();
+  const data = Storage.get();
+  const teachers = (data.users || []).filter(u => u.role === 'teacher').filter(u => {
+    return !q || u.name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q);
+  });
+  const isLib = Auth.isLibrarian();
+  document.getElementById('teachers-content').innerHTML = teachers.length
+    ? `<div class="table-wrap"><table><thead><tr>
+        <th>Ad Soyad</th><th>Kullanıcı Adı</th><th>Branş</th>
+        ${isLib ? '<th></th>' : ''}
+      </tr></thead><tbody>${teachers.map(t => `<tr>
+        <td><strong>${t.name || ''}</strong></td>
+        <td><span class="chip">${t.username}</span></td>
+        <td style="font-size:12px;color:var(--text3)">${t.branch || '—'}</td>
+        ${isLib ? `<td style="display:flex;gap:6px;padding:8px 14px">
+          <button class="btn btn-sm" onclick="openEditTeacher('${t.username}')">Düzenle</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteTeacher('${t.username}')">Sil</button>
+        </td>` : ''}
+      </tr>`).join('')}</tbody></table></div>`
+    : `<div class="empty-state"><div class="ei">👨‍🏫</div><p>Henüz öğretmen eklenmedi</p>
+        ${isLib ? '<button class="btn btn-primary" onclick="openEditTeacher(null)">+ Öğretmen Ekle</button>' : ''}
+      </div>`;
+}
+
+function openEditTeacher(username) {
+  const data = Storage.get();
+  const t = username ? (data.users || []).find(u => u.username === username) : null;
+  document.getElementById('modal-teacher-title').textContent = t ? 'Öğretmeni Düzenle' : 'Öğretmen Ekle';
+  document.getElementById('edit-teacher-id').value = username || '';
+  document.getElementById('et-name').value = t ? (t.name || '') : '';
+  document.getElementById('et-surname').value = t ? (t.surname || '') : '';
+  document.getElementById('et-username').value = t ? t.username : '';
+  document.getElementById('et-password').value = t ? (t.password || '') : '';
+  document.getElementById('et-branch').value = t ? (t.branch || '') : '';
+  UI.modal('modal-edit-teacher', true);
+}
+
+function saveTeacher() {
+  const oldUsername = document.getElementById('edit-teacher-id').value;
+  const name = document.getElementById('et-name').value.trim();
+  const surname = document.getElementById('et-surname').value.trim();
+  const username = document.getElementById('et-username').value.trim();
+  const password = document.getElementById('et-password').value.trim();
+  const branch = document.getElementById('et-branch').value.trim();
+  if (!name || !username || !password) { UI.alert('Ad, kullanıcı adı ve şifre zorunludur.', 'danger'); return; }
+  const data = Storage.get();
+  const users = data.users || [];
+  if (oldUsername) {
+    const idx = users.findIndex(u => u.username === oldUsername);
+    if (idx !== -1) users[idx] = { ...users[idx], name, surname, username, password, branch };
+    UI.alert(`${name} ${surname} güncellendi.`);
+  } else {
+    if (users.find(u => u.username === username)) { UI.alert('Bu kullanıcı adı zaten kullanımda.', 'danger'); return; }
+    users.push({ id: Date.now(), name, surname, username, password, role: 'teacher', branch });
+    UI.alert(`${name} ${surname} eklendi.`);
+  }
+  Storage.save({ users });
+  UI.modal('modal-edit-teacher', false);
+  renderTeachers();
+}
+
+function deleteTeacher(username) {
+  const data = Storage.get();
+  const t = (data.users || []).find(u => u.username === username);
+  if (!t) return;
+  if (!confirm(`${t.name || username} adlı öğretmeni silmek istediğinize emin misiniz?`)) return;
+  const users = (data.users || []).filter(u => u.username !== username);
+  Storage.save({ users });
+  UI.alert(`${t.name || username} silindi.`);
+  renderTeachers();
 }
 
 // ── REPORTS ───────────────────────────────────────────────
